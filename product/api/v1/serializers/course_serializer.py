@@ -131,15 +131,14 @@ class DetailedCourseSerializer(serializers.ModelSerializer):
         max_students_per_group = 30
         groups = obj.groups.annotate(num_students=Count('students'))
 
-        if not groups.exists():
+        if not groups:
             return 0
-        
-        total_fill_percentage = 0
-        for group in groups:
-            group_percentage = (group.num_students / max_students_per_group) * 100
-            total_fill_percentage += group_percentage
-        
-        return total_fill_percentage / groups.count()
+
+        total_fill_percentage = sum(
+        (group.num_students / max_students_per_group) * 100 for group in groups
+        )
+
+        return total_fill_percentage / len(groups)
 
     def get_demand_course_percent(self, obj):
         """Процент приобретения курса."""
