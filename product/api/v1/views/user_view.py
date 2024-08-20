@@ -7,7 +7,7 @@ from rest_framework.response import Response
 
 from users.models import Balance
 from api.v1.serializers.user_serializer import CustomUserSerializer, BalanceSerializer
-from api.v1.services.user_view_serv import validate_amount
+from api.v1.services.user_view_serv import get_bonus
 
 User = get_user_model()
 
@@ -23,7 +23,6 @@ class UserBonusViewSet(viewsets.ViewSet):
     """Вьюсет для работы с балансом текущего пользователя."""
 
     permission_classes = [permissions.IsAuthenticated]
-    
 
     def retrieve(self, request, pk=None):
         """Просмотр баланса текущего пользователя."""
@@ -32,14 +31,14 @@ class UserBonusViewSet(viewsets.ViewSet):
         balance = Balance.objects.get(user=user)
         serializer = BalanceSerializer(balance)
         return Response(serializer.data)
-    
+
 
 class AdminBonusViewSet(viewsets.ViewSet):
-    """Вьюсет для работы с балансами пользователей. 
-        Доступен только администраторам."""
+    """Вьюсет для работы с балансами пользователей.
+    Доступен только администраторам."""
 
     permission_classes = [permissions.IsAdminUser]
-    http_method_names = ['get', 'post', 'head', 'options']
+    http_method_names = ["get", "post", "head", "options"]
 
     def list(self, request):
         """Просмотр всех балансов."""
@@ -53,21 +52,8 @@ class AdminBonusViewSet(viewsets.ViewSet):
         serializer = BalanceSerializer(balance)
         return Response(serializer.data)
 
-    @action(detail=True, methods=['post'])
+    @action(detail=True, methods=["post"])
     def add_bonus(self, request, pk=None):
         """Начисление бонусов пользователю."""
-        amount = request.data.get('amount')
-        validate_amount(amount)
-       
-        user = get_object_or_404(User, pk=pk)
-
-        # Начисление бонусов
-        balance, created = Balance.objects.get_or_create(user=user)
-        balance.amount += amount
-        balance.save()
-
-        return Response({
-            "message": f"Бонусы в размере {amount} успешно начислены пользователю {user.get_full_name()}",
-            "new_balance": balance.amount
-        })    
-    
+        return get_bonus(request, pk)
+      

@@ -1,8 +1,6 @@
-from django.core.exceptions import ValidationError
-from django.db import transaction
 from django.shortcuts import get_object_or_404
 
-from rest_framework import status, viewsets, permissions
+from rest_framework import viewsets, permissions
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAdminUser, IsAuthenticated
 from rest_framework.response import Response
