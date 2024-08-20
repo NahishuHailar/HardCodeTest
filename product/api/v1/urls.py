@@ -1,20 +1,29 @@
 from django.urls import include, path
+
 from drf_spectacular.views import (SpectacularAPIView, SpectacularRedocView,
                                    SpectacularSwaggerView)
 from rest_framework.routers import DefaultRouter
 
-from api.v1.views.course_view import CourseViewSet, GroupViewSet, LessonViewSet
-from api.v1.views.user_view import UserViewSet
+from api.v1.views.course_view import CourseViewSet, GroupViewSet, LessonViewSet, UsersCourseViewset
+from api.v1.views.user_view import UserViewSet, AdminBonusViewSet, UserBonusViewSet
 
 v1_router = DefaultRouter()
 v1_router.register('users', UserViewSet, basename='users')
 v1_router.register('courses', CourseViewSet, basename='courses')
+v1_router.register(r'usercourses', UsersCourseViewset, basename='userscourse')
 v1_router.register(
     r'courses/(?P<course_id>\d+)/lessons', LessonViewSet, basename='lessons'
 )
 v1_router.register(
     r'courses/(?P<course_id>\d+)/groups', GroupViewSet, basename='groups'
 )
+
+
+v1_router.register(r'admin/bonus', AdminBonusViewSet, basename='admin_bonus')
+
+v1_router.register(r'bonus', UserBonusViewSet, basename='user_bonus')
+
+
 
 urlpatterns = [
     path("", include(v1_router.urls)),
