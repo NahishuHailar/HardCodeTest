@@ -1,3 +1,4 @@
+from enum import unique
 from django.db import models
 from users.models import CustomUser
 
@@ -69,6 +70,7 @@ class Group(models.Model):
     title = models.CharField(
         max_length=250,
         verbose_name='Название',
+        unique=True
     )
     course = models.ForeignKey(
         'Course',  
