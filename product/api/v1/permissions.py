@@ -9,9 +9,9 @@ class IsStudentOrIsAdmin(BasePermission):
         return Subscription.objects.filter(user=request.user, course_id=view.kwargs.get('course_id')).exists()
 
     def has_object_permission(self, request, view, obj):
-        if request.user.is_staff:
-            return True
-        return obj.students.filter(id=request.user.id).exists()
+        return request.user.is_staff or request.method in SAFE_METHODS
+      
+    
 
 class ReadOnlyOrIsAdmin(BasePermission):
 
@@ -20,3 +20,12 @@ class ReadOnlyOrIsAdmin(BasePermission):
 
     def has_object_permission(self, request, view, obj):
         return request.user.is_staff or request.method in SAFE_METHODS
+
+
+def is_admin(func):
+    @wraps(func)    
+    def wrapper(self, request, *args, **kwargs):
+        if not request.user.is_staff:
+            return Response({'detail: sorry, is staff_only'})
+        return func(self, request, *args, **kwargs)
+    return wrapper

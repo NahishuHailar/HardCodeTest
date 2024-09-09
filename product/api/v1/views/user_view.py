@@ -15,7 +15,6 @@ User = get_user_model()
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     serializer_class = CustomUserSerializer
-    http_method_names = ["get", "head", "options"]
     permission_classes = (permissions.IsAdminUser,)
 
 

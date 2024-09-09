@@ -4,8 +4,9 @@ from rest_framework import viewsets, permissions
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAdminUser, IsAuthenticated
 from rest_framework.response import Response
+from yaml import serialize
 
-from api.v1.permissions import IsStudentOrIsAdmin
+from api.v1.permissions import IsStudentOrIsAdmin, ReadOnlyOrIsAdmin
 from api.v1.serializers.user_serializer import GroupWithStudentsSerializer
 from api.v1.serializers.course_serializer import (
     BasicCourseSerializer,
@@ -20,46 +21,47 @@ from api.v1.serializers.course_serializer import (
 )
 
 from api.v1.services.course_view_serv import students_to_group, make_payment
-from courses.models import Course, Group, GroupMembership
+from courses.models import Course, Group, GroupMembership, Lesson
 from users.models import Subscription
 
 
 class LessonViewSet(viewsets.ModelViewSet):
     """Уроки."""
 
-    permission_classes = (IsStudentOrIsAdmin,)
+    permission_classes = (ReadOnlyOrIsAdmin,)
 
     def get_serializer_class(self):
         if self.action in ["list", "retrieve"]:
-            return LessonSerializer
+            return LessonSerializer 
         return CreateLessonSerializer
 
     def perform_create(self, serializer):
-        course = get_object_or_404(Course, id=self.kwargs.get("course_id"))
-        serializer.save(course=course)
+        course_id = self.kwargs.get("course_id")
+        serializer.save(course_id=course_id)
 
     def get_queryset(self):
-        course = get_object_or_404(Course, id=self.kwargs.get("course_id"))
-        return course.lessons.all()
+        return Lesson.objects.filter(course_id=self.kwargs.get("course_id"))
 
 
 class GroupViewSet(viewsets.ModelViewSet):
     """Группы."""
 
-    permission_classes = (permissions.IsAdminUser,)
+    permission_classes = (IsStudentOrIsAdmin,)
 
     def get_serializer_class(self):
         if self.action in ["list", "retrieve"]:
             return GroupSerializer
         return CreateGroupSerializer
 
+   
     def perform_create(self, serializer):
-        course = get_object_or_404(Course, id=self.kwargs.get("course_id"))
-        serializer.save(course=course)
+        course_id = self.kwargs.get("course_id")
+        serializer.save(course_id=course_id)
+
 
     def get_queryset(self):
-        course = get_object_or_404(Course, id=self.kwargs.get("course_id"))
-        return course.groups.all()
+        course_id = self.kwargs.get("course_id")
+        return Group.objects.filter(course_id=course_id)
 
 
 class CourseViewSet(viewsets.ModelViewSet):
@@ -96,13 +98,9 @@ class UsersCourseViewset(viewsets.ModelViewSet):
     """
 
     permission_classes = [IsAuthenticated]
-    http_method_names = ["get", "post", "head", "options"]
+    http_method_names = ["get", "head", "options"]
 
     def get_serializer_class(self):
-        if self.action in [
-            "post",
-        ]:
-            return PurchaseCourseSerializer
         return UserCourseSerializer
 
     def get_queryset(self):
@@ -115,7 +113,7 @@ class UsersCourseViewset(viewsets.ModelViewSet):
             id__in=purchased_courses
         )
 
-    @action(detail=True, methods=["post"])
+    @action(detail=True, methods=["get"])
     def pay(self, request, pk=None):
         """Покупка доступа к курсу (подписка на курс)."""
         return make_payment(self, request, pk)

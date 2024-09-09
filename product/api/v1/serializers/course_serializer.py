@@ -2,7 +2,7 @@ from django.contrib.auth import get_user_model
 from django.db.models import Count
 from rest_framework import serializers
 
-from courses.models import Course, Group, Lesson
+from courses.models import Course, Group, Lesson, GroupMembership
 
 User = get_user_model()
 
@@ -48,9 +48,18 @@ class StudentSerializer(serializers.ModelSerializer):
 class GroupSerializer(serializers.ModelSerializer):
     """Список групп."""
 
+    course = serializers.StringRelatedField()
+    students = serializers.SerializerMethodField()
+
     class Meta:
         model = Group
         fields = '__all__'
+
+    def get_students(self, obj):
+        """Получить список студентов в группе."""
+        memberships = GroupMembership.objects.filter(group_id=obj.id).select_related('user')
+        return StudentSerializer([membership.user for membership in memberships], many=True).data
+
 
 
 class CreateGroupSerializer(serializers.ModelSerializer):
@@ -58,10 +67,7 @@ class CreateGroupSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Group
-        fields = (
-            'title',
-            'course',
-        )
+        fields = '__all__'
 
 
 class MiniLessonSerializer(serializers.ModelSerializer):
